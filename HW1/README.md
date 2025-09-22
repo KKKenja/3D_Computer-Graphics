@@ -1,6 +1,6 @@
 # HW1
 
-![image](https://hackmd.io/_uploads/rkqhV_Rixg.png)
+![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW1/data/2025-09-22%20150255.png)
 
 
 ## Task Table
@@ -77,7 +77,7 @@ for (float i= x-r1 ; i< x + r1; i+=dotNum){
 **4. CGCurve**
 
 ==先跟gpt要了XY參數式==
-![image](https://hackmd.io/_uploads/Bk_bcuCilg.png)
+![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW1/data/2025-09-22_GPTLOG.png)
 接著就是跟圓形 橢圓一樣的情況
 
 ```java=105
@@ -108,7 +108,7 @@ for (int i = 0; i < w * h; i++) {
 
 ## Bonus
 ### **color palette**
-![image](https://hackmd.io/_uploads/rkUzB_Coel.png)
+![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW1/data/2025-09-22_150448.png)
 You can select color from **12** colors (default : Black)
 
 ==使用LLM來寫大致架構==
