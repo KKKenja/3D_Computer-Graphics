@@ -76,7 +76,8 @@ for (float i= x-r1 ; i< x + r1; i+=dotNum){
 
 **4. CGCurve**
 
-==先跟gpt要了XY參數式==
+![image](https://img.shields.io/badge/ChatGPT-74aa9c?style=for-the-badge&logo=openai&logoColor=white)先跟gpt要了XY參數式
+
 ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW1/data/2025-09-22_GPTLOG.png)
 接著就是跟圓形 橢圓一樣的情況
 
