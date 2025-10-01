@@ -14,6 +14,7 @@
 | Bézier Curve Algorithm    | V     |
 | Eraser     | V     |
 
+> 由於完成時還沒學習mid-point演算法, 作業一並未使用到 
 
 ### info of task
 
