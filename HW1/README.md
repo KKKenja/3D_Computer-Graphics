@@ -112,7 +112,7 @@ for (int i = 0; i < w * h; i++) {
 ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW1/data/2025-09-22_150448.png)
 You can select color from **12** colors (default : Black)
 
-==使用LLM來寫大致架構==
+**使用LLM來寫大致架構**
 
 #### problem
 1. 一開始換顏色時，之前畫過的圖形顏色也會改變 => class加入記憶顏色的部分
