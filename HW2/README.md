@@ -18,9 +18,9 @@
 - per-sample depth 很關鍵：兩個形狀相交時，每個子樣本分別深度測試，才不會在邊緣出現「前後錯亂」的雜邊。
 
 ## 截圖
+- data/CGLAB2.png  
 
-
-## 實作重點（How）
+## 實作重點
 - CGLine：Bresenham/Midpoint 風格的誤差累積法，依 `e2=2*err` 決定 x/y 的前進，適用所有象限，輸出連續像素。
 - pnpoly：Ray-casting（向右射線），遇交點反轉 inside 狀態，對水平邊加 epsilon 避免除零。
 - findBoundBox：一次掃描取 `min/max`，縮小填充掃描範圍。
@@ -30,10 +30,11 @@
   - 在 viewport 啟動 `SSAA_begin(x,y,w,h)` 建立每像素 4 子樣本的 color/depth buffer；shape 在繪製時於子像素 `(0.25,0.25)/(0.75,0.25)/(0.25,0.75)/(0.75,0.75)` 做 pnpoly 覆蓋測試，通過者以 `SSAA_shadeSample(...)` 寫入並做 per-sample depth 測試；最後 `SSAA_resolve()` 平均 4 個子樣本輸出。
   - 優點：邊緣以覆蓋率混色，避免硬邊；per-sample depth 消除重疊時的光暈/黑邊。
 
-## 執行方式（Run）
+## Run
 1. 以 Processing 開啟專案並執行 `HW2.pde`。
 2. 以左上方按鈕新增 Rectangle/Star；在 Inspector 調 position/rotation/scale。
 3. 反鋸齒：已於 viewport 自動啟用（2×2 SSAA）。如需對照關閉，可暫時註解 `ShapeRenderer.pde` 中的 `SSAA_begin/SSAA_resolve`。
 
 ## LLM 協助
 可惜沒有哆啦A夢，使用Copilot-GPT5：快速拿到矩陣該長怎樣、釐清題目以及演算法細節、**無止盡的幫忙debug**，以及完成SSAA的部分。
+
