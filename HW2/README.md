@@ -18,7 +18,7 @@
 - per-sample depth 很關鍵：兩個形狀相交時，每個子樣本分別深度測試，才不會在邊緣出現「前後錯亂」的雜邊。
 
 ## 截圖
-- data/CGLAB2.png  
+- [data/CGLAB2.png  ](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW2/data/CGLAB2.png?raw=true)
 
 ## 實作重點
 - CGLine：Bresenham/Midpoint 風格的誤差累積法，依 `e2=2*err` 決定 x/y 的前進，適用所有象限，輸出連續像素。
@@ -37,4 +37,5 @@
 
 ## LLM 協助
 可惜沒有哆啦A夢，使用Copilot-GPT5：快速拿到矩陣該長怎樣、釐清題目以及演算法細節、**無止盡的幫忙debug**，以及完成SSAA的部分。
+
 
