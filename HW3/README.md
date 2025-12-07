@@ -23,7 +23,8 @@
 - **Backface Culling**: 在世界空間計算三角形法向量（edge1 × edge2），與視線方向（camera - triCenter）做點積。若 dot ≤ 0 表示背向相機，跳過繪製。
 
 ## 截圖
-- ![depth buffer visualization](screenshot.png)
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_2.png?raw=true)
 
 ## 實作重點
 - **Perspective Projection**:
@@ -60,7 +61,7 @@
   - 初始化為 1.0（最遠）
   - 每幀在 setDepthBuffer() 重置
   - 比較：if (GH_DEPTH[index] > z) 更新深度與顏色
-  - 視覺化：將 [-1,1] 映射到 [0,1] 再乘 0.7（更暗）
+  - 視覺化：將 [-1,1] 映射到 [0,1] 再乘 0.9（更暗）
 
 ## Run
 
@@ -81,3 +82,4 @@
 - 實作重心座標插值與深度測試邏輯
 - 完成相機控制與背面剔除功能
 - 修正相機座標系統（從 +Z 看向改為標準 -Z 看向）
+
