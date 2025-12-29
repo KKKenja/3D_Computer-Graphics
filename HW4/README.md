@@ -111,13 +111,13 @@ float r = ((pixelColor >> 16) & 0xFF) / 255.0;
 實作時需處理非同步檔案選擇，使用全域變數 `pendingTextureObject` 暫存物件。selectInput() 的回調函數必須定義在主檔案 HW4.pde 中。
 
 ## 截圖
-- Phong Shading: 最平滑的光照效果，高光明顯
+- **Phong Shading: 最平滑的光照效果，高光明顯**
 - ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_phong.png?raw=true)
-- - Flat Shading: 平面化外觀，每個面顏色一致
+- **Flat Shading: 平面化外觀，每個面顏色一致**
 - ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_flat.png?raw=true)
-- - Gouraud Shading: 介於 Phong 與 Flat 之間，頂點間顏色平滑過渡
+- **Gouraud Shading: 介於 Phong 與 Flat 之間，頂點間顏色平滑過渡**
 - ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_gouraud.png?raw=true)
-- - Texture Mapping: UV 座標正確映射紋理
+- **Texture Mapping: UV 座標正確映射紋理**
 - ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_texture.png?raw=true)
 - ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_depth.png?raw=true)
 
@@ -390,3 +390,4 @@ DepthMaterial → FlatMaterial → GouraudMaterial → PhongMaterial → ...
 ## 總結
 作業一至四算是不同次元，隨著作業的深入，寫作業的時間拉得很長(作業一甚至不用跟AI吵架)，不過成品也是越發厲害
 完成了三種經典的光照著色，並理解他們。
+
