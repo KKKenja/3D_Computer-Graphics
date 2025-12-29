@@ -69,7 +69,6 @@
   Vector3 edge2 = v2.sub(v0);
   Vector3 faceNormal = edge1.cross(edge2).unit_vector();
   ```
-- **為什麼不用頂點法向量？** 立方體的每個頂點被多個面共享，頂點法向量是平均值，會造成面與面之間的光滑過渡，破壞 Flat Shading 的平面感。
 - **Vertex Shader**: 計算整個三角形的光照顏色（三個頂點共用）
 - **Fragment Shader**: 直接使用插值顏色，不做額外計算
 - **問題修正**: 一開始使用頂點法向量導致立方體的每個面出現不連續的光照，改用 face normal 後得到正確的平面效果。
@@ -116,7 +115,12 @@
   - selectInput() 的回調函數必須在主檔案 (HW4.pde) 中定義
 
 ## 截圖
-（請自行新增截圖）
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
+- 
 - Phong Shading: 最平滑的光照效果，高光明顯
 - Flat Shading: 平面化外觀，每個面顏色一致
 - Gouraud Shading: 介於 Phong 與 Flat 之間，頂點間顏色平滑過渡
@@ -171,14 +175,14 @@
    - 輸出：最終像素顏色 (Vector4)
 
 ## Bug 修復歷程
-
+**上次未修復的bug: 之前一直都有存在選擇obj時若未選擇任何檔案就會當掉,這次有修好這部分**
 1. **NullPointerException**: cam_position 未初始化 → 在 setup() 中初始化
 2. **檔案選擇崩潰**: 空路徑傳入 loadOBJ → 加入 path.isEmpty() 檢查
 3. **ClassCastException**: Vector4 與 Vector3 混用 → 使用 .xyz() 轉換
 4. **立方體光照不連續**: 使用插值法向量 → 改用 face normal
 5. **相機 slider 不作用**: 未更新相機矩陣 → 在 slider 改變時呼叫 setPositionOrientation()
 6. **Depth Material 太亮**: 直接映射深度值 → 加入 pow(depth, 0.4) 增強對比
-7. **預設模型太大**: scale = 1.0 → 改為 0.1
+7. **預設模型太大**: scale = 1.0 → 改為 0.1 (為了塞knod)
 
 ## 操作說明
 
@@ -402,3 +406,4 @@ DepthMaterial → FlatMaterial → GouraudMaterial → PhongMaterial → ...
 4. **性能與質量**的權衡
 
 不同的著色模型適用於不同場景，了解它們的原理和特點有助於在實際開發中做出正確的選擇。
+
