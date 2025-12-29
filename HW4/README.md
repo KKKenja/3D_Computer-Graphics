@@ -10,13 +10,12 @@
 ## 實作過程
 
 ### Barycentric Coordinates 透視校正插值
-- **問題發現**: 一開始直接用螢幕空間座標計算重心座標，導致插值結果在透視投影下不正確（遠處的屬性被壓縮）。
-- **解決方法**: 實作 perspective-correct interpolation：
-  1. 計算螢幕空間重心座標 (w0, w1, w2)
-  2. 除以對應頂點的 w 分量：`w0/v0.w, w1/v1.w, w2/v2.w`
-  3. 重新正規化：`sum = w0/v0.w + w1/v1.w + w2/v2.w`
-  4. 最終權重：`weight0 = (w0/v0.w) / sum`
-- **關鍵代碼** (util.pde):
+
+一開始我直接用螢幕空間座標計算重心座標，結果發現在透視投影下會出錯，遠處的物體屬性都被壓縮了。後來才知道這是透視投影的特性，需要做透視校正才行。
+
+解決方法是實作 perspective-correct interpolation。首先計算螢幕空間的重心座標 (w0, w1, w2)，然後把每個權重除以對應頂點的 w 分量，得到 `w0/v0.w, w1/v1.w, w2/v2.w`。接著把這三個值加起來做正規化，最後得到正確的插值權重。這樣一來，不管物體在螢幕上哪個位置，插值結果都會是正確的。
+
+關鍵代碼在 util.pde 裡面：
   ```java
   // Screen-space barycentric
   float w0_screen = ((p1.x - px) * (p2.y - py) - (p2.x - px) * (p1.y - py)) / denom;
@@ -33,15 +32,12 @@
   ```
 
 ### Phong Shading (Per-Fragment)
-- **實作原理**: 在每個像素計算光照，提供最高品質的光照效果。
-- **Vertex Shader**: 只傳遞世界空間的位置與法向量給 Fragment Shader。
-- **Fragment Shader**: 
-  1. 重新正規化插值後的法向量（插值會改變長度）
-  2. 計算 ambient = ka * ambient_light
-  3. 計算 diffuse = kd * max(dot(N, L), 0)
-  4. 計算 specular = ks * pow(max(dot(R, V), 0), shininess)
-  5. 最終顏色 = (ambient + diffuse + specular) * albedo
-- **關鍵代碼** (ColorShader.pde PhongFragmentShader):
+
+Phong Shading 在每個像素計算光照，提供最高視覺品質。Vertex Shader 將頂點位置與法向量轉換到世界空間後傳遞給 Fragment Shader。
+
+Fragment Shader 執行主要光照計算。先將插值後的法向量重新正規化（插值會改變向量長度），再計算三種光照分量：環境光 (ambient) 提供基礎亮度、漫反射 (diffuse) 由表面朝向決定、鏡面高光 (specular) 由視角與反射方向決定。最終顏色為三個分量相加後乘上物體顏色。
+
+關鍵代碼在 ColorShader.pde 的 PhongFragmentShader：
   ```java
   Vector3 N = interpolatedNormal.unit_vector();
   Vector3 L = lightDir.unit_vector();
@@ -56,32 +52,32 @@
   Vector3 specular = ks.mult(spec);
   Vector3 finalColor = ambient.add(diffuse).add(specular).mult(albedo);
   ```
-- **Debug 經驗**: 
-  - 一開始忘記 normalize 插值後的法向量，導致光照不正確
-  - Vector3 的 normalize 方法是 `unit_vector()`，不是 `.normalized()`
-  - 需要用 `Vector3.mult()` 和 `.add()`，不能直接用運算符
+
+實作過程中踩了幾個坑: 一開始忘記把插值後的法向量重新正規化就變得很怪、cube一直很怪(knod很棒)。
 
 ### Flat Shading (Per-Face)
-- **實作原理**: 每個三角形面使用單一法向量，整個面顏色一致。
-- **Face Normal 計算**: 使用三角形兩邊的叉積
-  ```java
-  Vector3 edge1 = v1.sub(v0);
-  Vector3 edge2 = v2.sub(v0);
-  Vector3 faceNormal = edge1.cross(edge2).unit_vector();
-  ```
-- **Vertex Shader**: 計算整個三角形的光照顏色（三個頂點共用）
-- **Fragment Shader**: 直接使用插值顏色，不做額外計算
-- **問題修正**: 一開始使用頂點法向量導致立方體的每個面出現不連續的光照，改用 face normal 後得到正確的平面效果。
+
+Flat Shading 對每個三角形面使用單一顏色，呈現明顯的平面效果。實作時先計算面法向量，使用三角形兩條邊的叉積：
+
+```java
+Vector3 edge1 = v1.sub(v0);
+Vector3 edge2 = v2.sub(v0);
+Vector3 faceNormal = edge1.cross(edge2).unit_vector();
+```
+
+Vertex Shader 用面法向量計算一次光照，三個頂點使用相同顏色。Fragment Shader 直接輸出該顏色。
+
+實作時發現使用頂點法向量會造成立方體面之間出現漸層。這是因為頂點法向量是周圍面的平均值，產生平滑過渡效果。改用面法向量後得到正確的平面著色效果。
 
 ### Gouraud Shading (Per-Vertex)
-- **實作原理**: 在頂點計算光照，插值顏色到像素。
-- **Vertex Shader**: 
-  1. 在三個頂點各自計算 Phong lighting
-  2. 輸出三個頂點的顏色
-- **Fragment Shader**: 使用插值後的顏色（barycentric 自動插值）
-- **效率優勢**: 只需計算 3 次光照（頂點），而非 N 次（像素）
-- **視覺差異**: 比 Phong Shading 稍微不準確，但比 Flat Shading 平滑
-- **關鍵代碼** (ColorShader.pde GouraudVertexShader):
+
+Gouraud Shading 在頂點計算光照，再將顏色插值到像素。效率較高，每個三角形僅需計算三次光照（三個頂點），而非像 Phong Shading 對每個像素計算。
+
+Vertex Shader 對每個頂點執行完整 Phong lighting 計算，包含環境光、漫反射、鏡面高光，輸出三個頂點各自的顏色。Fragment Shader 使用 GPU 自動以重心座標插值的頂點顏色。
+
+視覺效果介於 Phong 和 Flat 之間，較 Flat Shading 平滑，但鏡面高光位置較不準確（由插值產生而非實際計算）。
+
+關鍵在 ColorShader.pde 的 GouraudVertexShader：
   ```java
   for (int i = 0; i < 3; i++) {
       Vector3 N = normal[i].unit_vector();
@@ -94,37 +90,41 @@
   ```
 
 ### Texture Shader (Bonus)
-- **實作原理**: 使用 UV 座標從紋理圖片採樣顏色。
-- **材質選擇**: 點擊 MaterialButton 從 PhongMaterial 切換時，會彈出文件選擇對話框，讓使用者選擇紋理圖片。
-- **Vertex Shader**: 傳遞 UV 座標（不需變換）
-  ```java
-  varying_uv[i] = new Vector4(uv[i].x, uv[i].y, 0.0, 1.0);
-  ```
-- **Fragment Shader**: 
-  1. 將 [0,1] 的 UV 座標轉換為像素座標
-  2. 從 PImage.pixels[] 陣列讀取顏色
-  3. 提取 RGB 分量（處理 Processing 的 32-bit color 格式）
-  ```java
-  int texX = int(uv.x * (texture.width - 1));
-  int texY = int(uv.y * (texture.height - 1));
-  int pixelColor = texture.pixels[texY * texture.width + texX];
-  float r = ((pixelColor >> 16) & 0xFF) / 255.0;
-  ```
-- **實作挑戰**: 
-  - 需要全域變數 `pendingTextureObject` 處理非同步的檔案選擇回調
-  - selectInput() 的回調函數必須在主檔案 (HW4.pde) 中定義
+
+Texture Shader 使用 UV 座標從圖片採樣顏色，實現紋理映射。切換到 TextureMaterial 時會開啟檔案選擇對話框。
+
+Vertex Shader 直接傳遞 UV 座標，不需轉換：
+
+```java
+varying_uv[i] = new Vector4(uv[i].x, uv[i].y, 0.0, 1.0);
+```
+
+Fragment Shader 將 UV 座標（範圍 0~1）轉換為像素座標，從 PImage.pixels[] 讀取顏色，再將 Processing 的 32-bit color 格式解析為 RGB 分量：
+
+```java
+int texX = int(uv.x * (texture.width - 1));
+int texY = int(uv.y * (texture.height - 1));
+int pixelColor = texture.pixels[texY * texture.width + texX];
+float r = ((pixelColor >> 16) & 0xFF) / 255.0;
+```
+
+實作時需處理非同步檔案選擇，使用全域變數 `pendingTextureObject` 暫存物件。selectInput() 的回調函數必須定義在主檔案 HW4.pde 中。
 
 ## 截圖
-- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
-- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
-- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
-- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
-- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW3/data/hw3_1.png?raw=true)
-- 
 - Phong Shading: 最平滑的光照效果，高光明顯
-- Flat Shading: 平面化外觀，每個面顏色一致
-- Gouraud Shading: 介於 Phong 與 Flat 之間，頂點間顏色平滑過渡
-- Texture Mapping: UV 座標正確映射紋理
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_phong.png?raw=true)
+- - Flat Shading: 平面化外觀，每個面顏色一致
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_flat.png?raw=true)
+- - Gouraud Shading: 介於 Phong 與 Flat 之間，頂點間顏色平滑過渡
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_gouraud.png?raw=true)
+- - Texture Mapping: UV 座標正確映射紋理
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_texture.png?raw=true)
+- ![image](https://github.com/KKKenja/3D_Computer-Graphics/blob/main/HW4/data/hw4_depth.png?raw=true)
+
+
+
+
+
 
 ## 三種 Shading 比較
 
@@ -139,40 +139,30 @@
 ## 實作重點
 
 ### Perspective-Correct Interpolation
-- 為什麼需要？螢幕空間的線性插值在透視投影下會產生扭曲
-- 核心公式：`I = (I0/w0 * α + I1/w1 * β + I2/w2 * γ) / (α/w0 + β/w1 + γ/w2)`
-- 應用：所有需要插值的屬性（顏色、法向量、UV）都使用此方法
+
+在透視投影裡，如果直接在螢幕空間做線性插值會出問題，遠處的東西會變形。所以要做透視校正插值，核心公式是 `I = (I0/w0 * α + I1/w1 * β + I2/w2 * γ) / (α/w0 + β/w1 + γ/w2)`。所有需要插值的屬性像是顏色、法向量、UV 座標都要用這個方法，不然渲染出來的畫面會怪怪的。
 
 ### Lighting Model (Phong Reflection Model)
-- **Ambient**: 環境光，不受光源方向影響
-  - `ambient = ka * AMBIENT_LIGHT * albedo`
-- **Diffuse**: 漫反射，與表面朝向光源角度有關
-  - `diffuse = kd * max(dot(N, L), 0) * albedo`
-- **Specular**: 鏡面高光，與視角和反射方向有關
-  - `R = 2 * (N·L) * N - L`
-  - `specular = ks * pow(max(dot(R, V), 0), shininess)`
-- 參數設定：
-  - ka = (0.1, 0.1, 0.1) - 弱環境光
-  - kd = (0.6, 0.6, 0.6) - 主要漫反射
-  - ks = (0.8, 0.8, 0.8) - 強烈高光
-  - shininess = 32.0
+
+Phong 光照模型包含三個部分。第一個是環境光 (Ambient)，這是場景的基礎亮度，不管光源在哪都有，公式是 `ambient = ka * AMBIENT_LIGHT * albedo`。
+
+第二個是漫反射 (Diffuse)，跟表面朝向光源的角度有關。表面越正對光源就越亮，公式是 `diffuse = kd * max(dot(N, L), 0) * albedo`。這裡用法向量和光線方向做內積，如果是負的就代表背光，要夾到 0。
+
+第三個是鏡面高光 (Specular)，模擬光滑表面的反光效果。要先算出反射向量 `R = 2 * (N·L) * N - L`，然後看反射方向跟視線方向有多接近，越接近就越亮。公式是 `specular = ks * pow(max(dot(R, V), 0), shininess)`。shininess 這個參數控制高光的銳利度，數值越大高光越集中。
+
+我用的參數是 ka = (0.1, 0.1, 0.1) 給一點點環境光，kd = (0.6, 0.6, 0.6) 讓漫反射佔主導，ks = (0.8, 0.8, 0.8) 給明顯的高光，shininess = 32.0 讓高光不會太散。
 
 ### Material System
-- 使用列舉 `MaterialEnum { DM, FM, GM, PM, TM }` 切換材質
-- 點擊 MaterialButton 循環切換：
-  - DM (DepthMaterial) → FM (FlatMaterial) → GM (GouraudMaterial) 
-  - → PM (PhongMaterial) → TM (TextureMaterial) → DM...
-- 每種材質綁定對應的 VertexShader 和 FragmentShader
+
+材質系統用一個列舉 `MaterialEnum { DM, FM, GM, PM, TM }` 來管理不同的材質。點擊 MaterialButton 就會循環切換，順序是 DM (DepthMaterial) → FM (FlatMaterial) → GM (GouraudMaterial) → PM (PhongMaterial) → TM (TextureMaterial)，然後又回到 DM。每種材質都綁定了對應的 VertexShader 和 FragmentShader，切換材質的時候整個渲染流程就會跟著改變。
 
 ### Shader Pipeline
-1. **Vertex Shader**: 
-   - 輸入：頂點屬性 (position, normal, uv)、Uniform (MVP matrix, light)
-   - 輸出：gl_Position (裁剪空間座標)、varying (傳給 Fragment Shader 的資料)
-2. **Rasterization**: 
-   - 自動進行：重心座標計算、perspective-correct 插值、depth test
-3. **Fragment Shader**:
-   - 輸入：插值後的 varying 資料、其他 uniform (texture, light)
-   - 輸出：最終像素顏色 (Vector4)
+
+整個渲染流程分三個階段。首先是 Vertex Shader，吃進頂點屬性（位置、法向量、UV）和一些統一參數（MVP 矩陣、光源），算出裁剪空間座標 (gl_Position) 和要傳給下一階段的資料 (varying)。
+
+接著是光柵化 (Rasterization)，這個階段是自動的。GPU 會算重心座標、做透視校正插值、還有深度測試，把三角形變成一堆像素。
+
+最後是 Fragment Shader，拿到插值好的資料和其他需要的東西（像紋理、光源），算出每個像素最終的顏色。
 
 ## Bug 修復歷程
 **上次未修復的bug: 之前一直都有存在選擇obj時若未選擇任何檔案就會當掉,這次有修好這部分**
@@ -398,12 +388,5 @@ DepthMaterial → FlatMaterial → GouraudMaterial → PhongMaterial → ...
 ---
 
 ## 總結
-
-本作業成功實現了三種經典的光照著色模型，深入理解了：
-1. **渲染管線**的完整流程
-2. **透視修正插值**的重要性
-3. **法向量變換**的數學原理
-4. **性能與質量**的權衡
-
-不同的著色模型適用於不同場景，了解它們的原理和特點有助於在實際開發中做出正確的選擇。
-
+作業一至四算是不同次元，隨著作業的深入，寫作業的時間拉得很長(作業一甚至不用跟AI吵架)，不過成品也是越發厲害
+完成了三種經典的光照著色，並理解他們。
